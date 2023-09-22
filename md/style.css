@@ -1,0 +1,37 @@
+
+body {
+	max-width: 70ch;
+	margin: 8ex auto 8ex auto;
+	padding: 0 10% 0 10%;
+	font: larger monospace;
+}
+
+header a {
+	display: inline-flex;
+	align-items: center;
+	column-gap: 1em;
+	font-size: small;
+	color: white;
+}
+
+header img {
+  height: 2em;
+}
+
+a {
+	font-weight: bold;
+	text-decoration: none;
+	color: #80a0ff;
+}
+
+ul {
+	list-style: '> ' inside;
+	padding-left: 2ch;
+}
+
+dd {
+	font-style: italic;
+	margin-left: 2ch;
+	margin-bottom: 2ex;
+}
+

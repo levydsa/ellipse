@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -e
+
+update_index() {
+	shopt -s nullglob
+
+	dir="$1"
+	index_title="/${dir#./md/}"
+
+	echo -e "- ${dir}index.md, with title $index_title"
+
+	echo -e "\n# $index_title\n" > "$dir/index.md"
+
+	for entry in $(ls -1 --time=creation "$dir"*.md); do
+		[ -e "$entry" ] || continue
+		[ "$entry" != "${dir}index.md" ] || continue
+		echo -e "\tentry $entry in ${dir}index.md"
+
+		title="$(sed -n "s/^#\ *\(.*\)/\1/p" "$entry" | sed 1q)"
+
+		echo "- [$title](${entry#"$dir"})" >> "$dir/index.md"
+	done
+
+	for entry in "$dir"*/; do
+		echo -e "\tentry $entry in ${dir}index.md"
+
+		echo "- [${entry#./md/}](${entry#./md/})" >> "$dir/index.md"
+	done
+
+	for ndir in "$dir"*/; do
+		update_index "$ndir"
+	done
+
+	shopt -u nullglob
+}
+
+render() {
+	md="$1"
+	dir="$2"
+	out="$dir/$(basename "$md" .md).html"
+
+	title=$(sed -n "s|^#\ *\(.*\)|\1|p" "$file" | sed 1q)
+	title=${title:-$(basename "$file" .md)}
+	email="levyddsa@gmail.com"
+	header="$(sed "s|(title)|$title|g" header.html)"
+	footer="$(sed "s|(email)|$email|g" footer.html)"
+
+	page="$(lowdown "$md" | sed "s|href=\"\(.*\)\.md\"|href=\"\1.html\"|g")"
+
+	{ echo "$header"; echo "$page"; echo "$footer"; } > "$out"
+}
+
+echo "=> Making indexes:"
+update_index "./md/"
+
+[ -e html/ ] && rm -r html/
+mkdir html/
+
+echo "=> Rendering files:"
+
+find ./md/ -type f | while read -r file; do
+	outdir="$(dirname "./html/${file#./md/}")"
+	mkdir -p "$outdir"
+	case $file in
+		*.md)
+			echo "- rendering $file to $outdir"
+			render "$file" "$outdir" ;;
+		*)
+			echo "- copy $file to $outdir"
+			cp -- "$file" "$outdir" ;;
+	esac
+done
+
